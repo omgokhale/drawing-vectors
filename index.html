@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vectors 101</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;700&family=Google+Sans+Code:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <nav class="nav-sidebar">
+    <h2 class="menu-headline">Vector</h2>
+    <div class="content-list-wrap">
+      <ul class="content-list" id="contentList">
+        <li><button class="content-btn" data-content="line" data-active="true">Line</button></li>
+        <li><button class="content-btn" data-content="rect">Rectangle</button></li>
+        <li><button class="content-btn" data-content="logo">Logo</button></li>
+        <li><button class="content-btn" data-content="face">Face</button></li>
+        <li><button class="content-btn" data-content="scene">Flower</button></li>
+      </ul>
+      <span class="selector-dot" id="contentDot" aria-hidden="true"></span>
+    </div>
+    <div class="mode-toggle" id="modeToggle">
+      <button class="mode-btn" data-mode="mixed" data-active="true">Mixed</button>
+      <button class="mode-btn" data-mode="english">English</button>
+      <button class="mode-btn" data-mode="code">Code</button>
+      <span class="selector-dot" id="modeDot" aria-hidden="true"></span>
+    </div>
+  </nav>
+
+  <div class="instruction-column">
+    <div class="compact-controls" id="compactControls">
+      <div class="mini-select-wrap">
+        <select id="modeSelect" class="mini-select" aria-label="Display mode">
+          <option value="mixed">Mixed</option>
+          <option value="english">English</option>
+          <option value="code">Code</option>
+        </select>
+      </div>
+      <div class="mini-select-wrap">
+        <select id="contentSelect" class="mini-select" aria-label="Content">
+          <option value="line">Line</option>
+          <option value="rect">Rectangle</option>
+          <option value="logo">Logo</option>
+          <option value="face">Face</option>
+          <option value="scene">Flower</option>
+        </select>
+      </div>
+    </div>
+    <h2 class="menu-headline">Instructions</h2>
+    <pre id="instructionText" class="instruction-text"></pre>
+  </div>
+
+  <main class="canvas-column">
+    <div class="canvas-frame" id="canvasFrame">
+      <div class="top-labels" id="topLabels"></div>
+      <div class="left-labels" id="leftLabels"></div>
+      <div class="grid-square-wrap" id="gridSquareWrap">
+        <svg id="grid" class="grid-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+        <div class="dimension-tooltip" id="dimensionTooltip" hidden></div>
+
+        <div class="color-popover" id="colorPopover" hidden>
+          <div class="swatch-row" id="swatchRow"></div>
+        </div>
+
+        <button class="reveal-btn" id="revealBtn">
+          <span id="revealLabel">Reveal</span>
+        </button>
+
+        <button class="broom-btn" id="clearBtn" title="Clear canvas" aria-label="Clear canvas">
+          <svg viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
+        </button>
+
+        <div class="toolbar" id="toolbar">
+          <button class="tool-btn" data-tool="cursor" title="Cursor" aria-label="Cursor tool">
+            <svg viewBox="0 0 256 256"><path d="M168,132.69,214.08,115l.33-.13A16,16,0,0,0,213,85.07L52.92,32.8A15.95,15.95,0,0,0,32.8,52.92L85.07,213a15.82,15.82,0,0,0,14.41,11l.78,0a15.84,15.84,0,0,0,14.61-9.59l.13-.33L132.69,168,184,219.31a16,16,0,0,0,22.63,0l12.68-12.68a16,16,0,0,0,0-22.63ZM195.31,208,144,156.69a16,16,0,0,0-26,4.93c0,.11-.09.22-.13.32l-17.65,46L48,48l159.85,52.2-45.95,17.64-.32.13a16,16,0,0,0-4.93,26h0L208,195.31Z"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="line" title="Line" aria-label="Line tool">
+            <svg viewBox="0 0 256 256"><path d="M214.64,41.36a32,32,0,0,0-50.2,38.89L80.25,164.44a32.06,32.06,0,0,0-38.89,4.94h0a32,32,0,1,0,50.2,6.37l84.19-84.19a32,32,0,0,0,38.89-50.2Zm-139.33,162a16,16,0,0,1-22.64-22.64h0a16,16,0,0,1,22.63,0h0A16,16,0,0,1,75.31,203.33Zm128-128a16,16,0,1,1,0-22.63A16,16,0,0,1,203.33,75.3Z"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="rect" title="Rectangle" aria-label="Rectangle tool">
+            <svg viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,160H40V56H216V200Z"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="circle" title="Circle" aria-label="Circle tool">
+            <svg viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="curve" title="Curve" aria-label="Curve tool">
+            <svg viewBox="0 0 256 256"><path d="M239.24,131.4c-22,46.8-41.4,68.6-61.2,68.6-25.1,0-40.73-33.32-57.28-68.6C107.7,103.56,92.9,72,78,72c-16.4,0-36.31,37.21-46.72,59.4a8,8,0,0,1-14.48-6.8C38.71,77.8,58.16,56,78,56c25.1,0,40.73,33.32,57.28,68.6C148.3,152.44,163.1,184,178,184c16.4,0,36.31-37.21,46.72-59.4a8,8,0,0,1,14.48,6.8Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
