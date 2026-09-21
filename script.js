@@ -3,11 +3,6 @@
 // A fixed gallery of five targets (Line, Rectangle, Logo, Face, Flower), each
 // described as a list of shapes. The player reproduces them on a grid using
 // a small toolbar, then compares against the exact target on Reveal.
-//
-// The Logo target is the real MIT Media Lab mark: its two closed paths were
-// decoded from the official SVG (upload.wikimedia.org) and mapped onto this
-// grid's integer coordinates, then represented as line segments since our
-// tools don't include an arbitrary multi-point polygon.
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GRID_UNITS = 20;
@@ -73,13 +68,6 @@ const CONTENT = {
   },
   logo: {
     label: 'Logo',
-    // Decoded from the official mark: six solid rectangles in a pinwheel,
-    // each exactly one-seventh of the mark's width/height thick. Our grid
-    // is 20 units, which isn't divisible by 7, so this uses the largest
-    // whole-number cell that fits (2 units per seventh, 14 units overall)
-    // rather than rounding each rectangle's edges independently — that gave
-    // inconsistent 2-vs-3-unit thicknesses. Shifted up from center so the
-    // lowest edge stays clear of the bottom ~20% (where the toolbar sits).
     shapes: [
       { type: 'rect', points: [[3, 1], [11, 3]] },
       { type: 'rect', points: [[3, 13], [11, 15]] },
@@ -91,24 +79,15 @@ const CONTENT = {
   },
   face: {
     label: 'Face',
-    // Sized (radius 6, not 8) and centered higher so the chin stays clear
-    // of the bottom ~20% of the grid, where the toolbar sits.
     shapes: [
       { type: 'circle', points: [[10, 8], [16, 8]], color: '#F3DA5F' },
-      { type: 'circle', points: [[8, 6], [9, 6]], color: '#000000' },
-      { type: 'circle', points: [[12, 6], [13, 6]], color: '#000000' },
-      { type: 'curve', points: [[7, 10], [10, 13], [13, 10]], color: '#000000' },
+      { type: 'circle', points: [[8, 7], [8.5, 7]], color: '#000000' },
+      { type: 'circle', points: [[12, 7], [12.5, 7]], color: '#000000' },
+      { type: 'curve', points: [[7, 9], [10, 11], [13, 9]], color: '#000000' },
     ],
   },
   scene: {
     label: 'Flower',
-    // Reference illustration (448x531) re-derived with whole-number grid
-    // coordinates instead of the exact scaled values — same structure (four
-    // petals of equal radius placed so each one passes through a shared
-    // center, a stem descending from behind the lower petal, two symmetric
-    // curved leaves branching from the stem's base). The background is a
-    // tight "sky" rectangle with a 2-unit margin around the flower+stem's
-    // own bounding box, rather than covering the full canvas.
     shapes: [
       { type: 'rect', points: [[4, 1], [16, 17]], color: '#B7E5ED' },
       { type: 'line', points: [[10, 9], [10, 15]], color: '#66B879' },
@@ -779,13 +758,13 @@ function getRawPoint(evt, svg) {
   return [u, v];
 }
 
-// Returns an edge point at exactly an integer distance from center, along
-// the direction of the raw (unsnapped) cursor position.
+// Returns an edge point at exactly a half-grid-unit distance from center,
+// along the direction of the raw (unsnapped) cursor position.
 function snappedCirclePoint(center, rawPoint) {
   const dx = rawPoint[0] - center[0];
   const dy = rawPoint[1] - center[1];
   const dist = Math.hypot(dx, dy);
-  const r = Math.max(1, Math.round(dist));
+  const r = Math.max(0.5, Math.round(dist * 2) / 2);
   if (dist === 0) return [center[0] + r, center[1]];
   const scale = r / dist;
   return [center[0] + dx * scale, center[1] + dy * scale];
