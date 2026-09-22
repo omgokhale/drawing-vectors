@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Vectors 101</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;700&family=Google+Sans+Code:wght@400;500&display=swap" rel="stylesheet" />
@@ -25,23 +26,10 @@
       </ul>
       <span class="selector-dot" id="contentDot" aria-hidden="true"></span>
     </div>
-    <div class="mode-toggle" id="modeToggle">
-      <button class="mode-btn" data-mode="mixed" data-active="true">Mixed</button>
-      <button class="mode-btn" data-mode="english">English</button>
-      <button class="mode-btn" data-mode="code">Code</button>
-      <span class="selector-dot" id="modeDot" aria-hidden="true"></span>
-    </div>
   </nav>
 
   <div class="instruction-column">
     <div class="compact-controls" id="compactControls">
-      <div class="mini-select-wrap">
-        <select id="modeSelect" class="mini-select" aria-label="Display mode">
-          <option value="mixed">Mixed</option>
-          <option value="english">English</option>
-          <option value="code">Code</option>
-        </select>
-      </div>
       <div class="mini-select-wrap">
         <select id="contentSelect" class="mini-select" aria-label="Content">
           <option value="line">Line</option>
@@ -52,7 +40,12 @@
         </select>
       </div>
     </div>
-    <h2 class="menu-headline">Instructions</h2>
+    <div class="instructions-row">
+      <h2 class="menu-headline">Instructions</h2>
+      <button type="button" class="hints-btn" id="hintsBtn">
+        <span id="hintsLabel">Show hints</span>
+      </button>
+    </div>
     <pre id="instructionText" class="instruction-text"></pre>
   </div>
 

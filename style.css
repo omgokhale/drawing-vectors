@@ -9,7 +9,7 @@
   --grid-line-strong: #d3d3cf;
   --accent: #2f6fed;
   --accent-ink: #ffffff;
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* Shared row rhythm so the nav sidebar's content list and the instruction
      column's text line up: each menu's headline ("Image" / "Instructions")
@@ -21,21 +21,6 @@
 
   --font-ui: "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-code: "Google Sans Code", "SF Mono", Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121212;
-    --panel: #121212;
-    --ink: #f2f2f0;
-    --muted: #86847f;
-    --faint: #3a3a37;
-    --line: #2c2c29;
-    --grid-line: #232320;
-    --grid-line-strong: #3d3d39;
-    --accent: #5b8bff;
-    --accent-ink: #101010;
-  }
 }
 
 * { box-sizing: border-box; }
@@ -64,28 +49,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-.mode-toggle {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--row-gap);
-  margin-top: auto;
-}
-
-.mode-btn {
-  font-family: inherit;
-  font-size: 13px;
-  line-height: var(--row-h);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--faint);
-}
-
-.mode-btn[data-active="true"] { color: var(--ink); }
 
 .content-list-wrap {
   position: relative;
@@ -209,6 +172,47 @@ body.compact-nav .instruction-column .menu-headline { display: none; }
   color: var(--ink);
 }
 
+/* "Instructions" pairs with the hints toggle on the same row, so the
+   headline's own margin-bottom (see .menu-headline) moves to the row —
+   it still needs to hold when compact-nav hides the headline below (see
+   body.compact-nav .instruction-column .menu-headline) but the button
+   stays visible. */
+.instructions-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 0 0 var(--row-h);
+}
+
+.instructions-row .menu-headline {
+  margin: 0;
+}
+
+/* Plain inline text, not a pill — its line-height matches --row-h exactly
+   (like .menu-headline/.content-btn) so this row's height matches the
+   nav-sidebar's "Vector" headline row exactly, which is what keeps the
+   instruction text's first line aligned with "Line" below it. Still
+   animates its width smoothly on label change (see setHintsButtonState). */
+.hints-btn {
+  display: inline-flex;
+  align-items: center;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: var(--row-h);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--ink) 10%, transparent);
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: width 200ms ease;
+}
+
+.hints-btn:hover { opacity: 0.7; }
+
 .instruction-text {
   margin: 0;
   font-family: var(--font-code);
@@ -217,13 +221,6 @@ body.compact-nav .instruction-column .menu-headline { display: none; }
   color: var(--ink);
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-/* English mode shows plain prose, not code, so it reads in the UI font. In
-   Mixed mode the container itself stays in --font-code (for the code
-   lines) and only .instr-comment below overrides per line. */
-.instruction-text.is-english {
-  font-family: var(--font-ui);
 }
 
 .instr-comment {

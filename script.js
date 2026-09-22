@@ -103,15 +103,13 @@ const CONTENT = {
 };
 
 const CONTENT_ORDER = ['line', 'rect', 'logo', 'face', 'scene'];
-const MODE_ORDER = ['mixed', 'english', 'code']; // top-to-bottom order of .mode-btn in the DOM
 
 const el = {
-  modeToggle: document.getElementById('modeToggle'),
   contentList: document.getElementById('contentList'),
-  modeSelect: document.getElementById('modeSelect'),
   contentSelect: document.getElementById('contentSelect'),
   contentDot: document.getElementById('contentDot'),
-  modeDot: document.getElementById('modeDot'),
+  hintsBtn: document.getElementById('hintsBtn'),
+  hintsLabel: document.getElementById('hintsLabel'),
   instructionText: document.getElementById('instructionText'),
   canvasColumn: document.querySelector('.canvas-column'),
   canvasFrame: document.getElementById('canvasFrame'),
@@ -131,7 +129,7 @@ const el = {
 let playerLayer, targetLayer;
 let xTickLabels = [], yTickLabels = [];
 
-let mode = 'mixed'; // 'code' | 'english' | 'mixed'
+let showHints = false; // English translation shown alongside the code when toggled on
 let contentKey = 'line';
 let currentContent = CONTENT[contentKey];
 
@@ -157,42 +155,51 @@ function measureTextWidth(text, font) {
   return text.split('\n').reduce((max, line) => Math.max(max, measureCtx.measureText(line).width), 0);
 }
 
+// The "Instructions" headline + hints toggle sit in one row above the
+// instruction text regardless of content, so the column can never usefully
+// be narrower than that row needs — otherwise the button gets squeezed
+// (and its label clipped) whenever hints are off and the code alone is
+// short enough to want a much narrower column.
+function getInstructionHeaderMinWidth() {
+  const uiFont = '13px "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif';
+  const headlineWidth = measureTextWidth('INSTRUCTIONS', uiFont);
+  const labelWidth = Math.max(measureTextWidth('Show hints', uiFont), measureTextWidth('Hide hints', uiFont));
+  const ROW_GAP = 24; // .instructions-row's gap
+  const BUFFER = 8;
+  return Math.ceil(headlineWidth + ROW_GAP + labelWidth) + BUFFER;
+}
+
+function getInstructionMinWidth() {
+  return Math.max(INSTRUCTION_MIN_WIDTH, getInstructionHeaderMinWidth());
+}
+
 // How wide the instruction column would need to be in wide mode for the
 // CURRENT content — a one-line "M 3 16 L 17 4" needs far less than the
 // Logo's 16-line listing, so this is measured from the actual text rather
 // than reserved at a worst-case guess (which is what made the layout switch
 // to compact well before the canvas actually needed the space).
 function getWideInstructionWidth() {
-  // English text renders in the proportional UI font; code (Code mode, and
-  // the code half of Mixed mode) renders in the monospace code font — pick
-  // whichever dominates the current mode for a reasonably accurate measure.
-  const font = mode === 'english'
-    ? '13px "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif'
-    : '13px "Google Sans Code", "SF Mono", Menlo, Consolas, monospace';
-  let text;
-  if (mode === 'code') {
-    text = currentContent.shapes.map(formatSyntax).join('\n');
-  } else if (mode === 'english') {
-    text = currentContent.shapes.map(translateShapeToEnglish).join('\n');
-  } else {
-    text = currentContent.shapes
-      .map((shape) => `${formatSyntax(shape)}\n${translateShapeToEnglish(shape)}`)
-      .join('\n');
-  }
+  // Code is always shown, so the code font drives the measurement even when
+  // hints (the English line underneath) are also visible.
+  const font = '13px "Google Sans Code", "SF Mono", Menlo, Consolas, monospace';
+  const text = showHints
+    ? currentContent.shapes.map((shape) => `${formatSyntax(shape)}\n${translateShapeToEnglish(shape)}`).join('\n')
+    : currentContent.shapes.map(formatSyntax).join('\n');
   const textWidth = measureTextWidth(text, font);
   const RIGHT_PADDING = 24;
   const BUFFER = 8;
-  const contentWidth = Math.min(INSTRUCTION_MAX_WIDTH, Math.max(INSTRUCTION_MIN_WIDTH, Math.ceil(textWidth) + RIGHT_PADDING + BUFFER));
+  const minWidth = getInstructionMinWidth();
+  const contentWidth = Math.min(INSTRUCTION_MAX_WIDTH, Math.max(minWidth, Math.ceil(textWidth) + RIGHT_PADDING + BUFFER));
 
   // Beyond hugging content, the column also has to fit the viewport: give it
   // whatever it wants as long as the canvas can still be a full-height
   // square, but cap it once that stops being true, so it shrinks (down to
-  // INSTRUCTION_MIN_WIDTH — see updateCompactNav for what happens past that
-  // floor) instead of overflowing or squeezing the canvas narrower than the
+  // minWidth — see updateCompactNav for what happens past that floor)
+  // instead of overflowing or squeezing the canvas narrower than the
   // available height.
   const availH = window.innerHeight - 2 * PAGE_P;
   const maxByViewport = window.innerWidth - WIDE_NAV_WIDTH - NAV_INSTRUCTION_GAP - GUTTER_LEFT - PAGE_P - availH;
-  return Math.max(INSTRUCTION_MIN_WIDTH, Math.min(contentWidth, maxByViewport));
+  return Math.max(minWidth, Math.min(contentWidth, maxByViewport));
 }
 
 function updateInstructionColumnWidth() {
@@ -200,17 +207,17 @@ function updateInstructionColumnWidth() {
 }
 
 // Compact-vs-wide is decided from the instruction column's floor
-// (INSTRUCTION_MIN_WIDTH), not its content-driven width — matching the cap
+// (getInstructionMinWidth), not its content-driven width — matching the cap
 // getWideInstructionWidth applies above. So: as the viewport narrows, the
 // column first shrinks (still wide layout, canvas stays a full-height
-// square) until it bottoms out at INSTRUCTION_MIN_WIDTH; only past that
-// point, where even the narrowest column would force the canvas to shrink
-// below the available height, do we give up and switch to compact. This
-// must stay independent of current content/mode (see getWideInstructionWidth)
-// or the same viewport size would behave inconsistently depending on what
-// happened to be showing.
+// square) until it bottoms out at that floor; only past that point, where
+// even the narrowest column would force the canvas to shrink below the
+// available height, do we give up and switch to compact. This must stay
+// independent of current content (see getWideInstructionWidth) or the same
+// viewport size would behave inconsistently depending on what happened to
+// be showing.
 function updateCompactNav() {
-  const wideAvailW = window.innerWidth - WIDE_NAV_WIDTH - NAV_INSTRUCTION_GAP - INSTRUCTION_MIN_WIDTH - GUTTER_LEFT - PAGE_P;
+  const wideAvailW = window.innerWidth - WIDE_NAV_WIDTH - NAV_INSTRUCTION_GAP - getInstructionMinWidth() - GUTTER_LEFT - PAGE_P;
   const availH = window.innerHeight - 2 * PAGE_P;
   document.body.classList.toggle('compact-nav', wideAvailW < availH);
 }
@@ -1043,10 +1050,10 @@ function translateShapeToEnglish(shape) {
   }
 }
 
-// A small colored dot right before a shape's color (the hex in Code mode,
-// the color word in English mode), so the player can match it to a palette
-// swatch by eye instead of decoding the hex digits — the text itself is
-// untouched, just annotated alongside.
+// A small colored dot right before a shape's color (the hex in the code
+// line, the color word in the hint line), so the player can match it to a
+// palette swatch by eye instead of decoding the hex digits — the text
+// itself is untouched, just annotated alongside.
 function appendTextWithDot(fragment, text, marker, color) {
   const idx = marker ? text.indexOf(marker) : -1;
   if (idx === -1) {
@@ -1061,11 +1068,9 @@ function appendTextWithDot(fragment, text, marker, color) {
   fragment.appendChild(document.createTextNode(text.slice(idx)));
 }
 
-// Mixed mode pairs each code line with its English translation underneath,
-// styled as a comment via reduced opacity (see .instr-comment) — same
-// literal translation used by English mode, just shown alongside the code
-// instead of replacing it.
-function renderMixedInstructionBlock(shape) {
+// With hints on, each code line gets its English translation underneath,
+// styled as a comment via reduced opacity (see .instr-comment).
+function renderCodeWithHintBlock(shape) {
   const fragment = document.createDocumentFragment();
   const codeText = formatSyntax(shape);
   appendTextWithDot(fragment, codeText, shape.color, shape.color);
@@ -1081,19 +1086,16 @@ function renderMixedInstructionBlock(shape) {
 }
 
 function renderInstructionLine(shape) {
-  if (mode === 'mixed') return renderMixedInstructionBlock(shape);
+  if (showHints) return renderCodeWithHintBlock(shape);
 
-  const text = mode === 'code' ? formatSyntax(shape) : translateShapeToEnglish(shape);
-  const marker = mode === 'code' ? shape.color : (shape.color ? COLOR_NAMES[shape.color] || shape.color : null);
   const fragment = document.createDocumentFragment();
-  appendTextWithDot(fragment, text, marker, shape.color);
+  appendTextWithDot(fragment, formatSyntax(shape), shape.color, shape.color);
   return fragment;
 }
 
 function updateInstructionDisplay() {
   el.instructionText.textContent = '';
-  el.instructionText.classList.toggle('is-english', mode === 'english');
-  const lineBreak = mode === 'code' ? '\n' : '\n\n'; // English reads as separate paragraphs
+  const lineBreak = showHints ? '\n\n' : '\n'; // hints read as separate paragraphs
   currentContent.shapes.forEach((shape, i) => {
     if (i > 0) el.instructionText.appendChild(document.createTextNode(lineBreak));
     el.instructionText.appendChild(renderInstructionLine(shape));
@@ -1114,13 +1116,15 @@ function positionSelectorDot(dotEl, index) {
   dotEl.style.transform = `translateY(${y}px)`;
 }
 
-function setMode(next) {
-  mode = next;
-  el.modeToggle.querySelectorAll('.mode-btn').forEach((btn) => {
-    btn.dataset.active = btn.dataset.mode === mode ? 'true' : 'false';
+function setHintsButtonState(visible) {
+  animatePillWidth(el.hintsBtn, () => {
+    el.hintsLabel.textContent = visible ? 'Hide hints' : 'Show hints';
   });
-  el.modeSelect.value = mode;
-  positionSelectorDot(el.modeDot, MODE_ORDER.indexOf(mode));
+}
+
+function setHints(on) {
+  showHints = on;
+  setHintsButtonState(showHints);
   updateInstructionDisplay();
 }
 
@@ -1184,23 +1188,27 @@ function clearAll() {
   refreshControls();
 }
 
-// Smoothly resizes the pill to fit its new label instead of snapping — lock
-// the current width, swap the text, measure the natural width it now wants,
-// then transition from the old width to the new one.
-function setRevealButtonState(isRevealed) {
-  const btn = el.revealBtn;
+// Smoothly resizes a pill button to fit its new label instead of snapping —
+// lock the current width, let the caller apply whatever label/state change,
+// measure the natural width it now wants, then transition from the old
+// width to the new one. Shared by Reveal and the hints toggle.
+function animatePillWidth(btn, applyChange) {
   const startWidth = btn.getBoundingClientRect().width;
-
   btn.style.width = `${startWidth}px`;
-  btn.dataset.active = isRevealed ? 'true' : 'false';
-  el.revealLabel.textContent = isRevealed ? 'Hide' : 'Reveal';
-
+  applyChange();
   btn.style.width = 'auto';
   const endWidth = btn.getBoundingClientRect().width;
   btn.style.width = `${startWidth}px`;
   btn.getBoundingClientRect(); // force reflow so the start width commits before transitioning
   requestAnimationFrame(() => {
     btn.style.width = `${endWidth}px`;
+  });
+}
+
+function setRevealButtonState(isRevealed) {
+  animatePillWidth(el.revealBtn, () => {
+    el.revealBtn.dataset.active = isRevealed ? 'true' : 'false';
+    el.revealLabel.textContent = isRevealed ? 'Hide' : 'Reveal';
   });
 }
 
@@ -1253,15 +1261,12 @@ document.addEventListener('pointerdown', (evt) => {
   hidePopover();
 });
 
-el.modeToggle.querySelectorAll('.mode-btn').forEach((btn) => {
-  btn.addEventListener('click', () => setMode(btn.dataset.mode));
-});
+el.hintsBtn.addEventListener('click', () => setHints(!showHints));
 
 el.contentList.querySelectorAll('.content-btn').forEach((btn) => {
   btn.addEventListener('click', () => setContent(btn.dataset.content));
 });
 
-el.modeSelect.addEventListener('change', () => setMode(el.modeSelect.value));
 el.contentSelect.addEventListener('change', () => setContent(el.contentSelect.value));
 
 el.revealBtn.addEventListener('click', toggleReveal);
@@ -1289,5 +1294,4 @@ document.addEventListener('keydown', (evt) => {
 });
 
 setContent('line');
-positionSelectorDot(el.modeDot, MODE_ORDER.indexOf(mode));
 updateInstructionDisplay();
